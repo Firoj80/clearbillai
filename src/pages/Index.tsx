@@ -12,7 +12,7 @@ const Index = () => {
       <Header />
       
       {/* Main Invoice Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3">
             <InvoiceForm />
@@ -25,14 +25,14 @@ const Index = () => {
       </div>
 
       {/* SEO Content Section */}
-      <section className="bg-invoice-light py-16">
+      <section className="bg-invoice-light py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SEOContent />
         </div>
       </section>
 
       {/* WordPress Course Promo */}
-      <section className="py-16">
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <WordPressPromo />
         </div>

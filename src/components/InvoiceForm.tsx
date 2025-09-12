@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import LogoUpload from "./LogoUpload";
+import SignSealUpload from "./SignSealUpload";
 
 interface InvoiceItem {
   id: string;
@@ -75,8 +76,9 @@ const InvoiceForm = () => {
           <div>
             <h3 className="text-lg font-medium mb-4">Invoice Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1">
+              <div className="md:col-span-1 space-y-6">
                 <LogoUpload />
+                <SignSealUpload />
               </div>
               <div className="md:col-span-2 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
