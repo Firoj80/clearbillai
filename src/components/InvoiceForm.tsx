@@ -65,6 +65,90 @@ const InvoiceForm = () => {
   const taxAmount = ((subtotal - discountAmount) * tax) / 100;
   const total = subtotal - discountAmount + taxAmount + shipping;
 
+  const generateAndDownloadInvoice = () => {
+    // Create invoice content as HTML
+    const invoiceContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice</title>
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+            .invoice-details { margin-bottom: 30px; }
+            .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .items-table th { background-color: #f2f2f2; }
+            .totals { margin-top: 20px; text-align: right; }
+            .total-line { margin: 5px 0; }
+            .final-total { font-weight: bold; font-size: 18px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>INVOICE</h1>
+            <div>Invoice #: INV-${Date.now()}</div>
+          </div>
+          
+          <div class="invoice-details">
+            <div style="display: flex; justify-content: space-between;">
+              <div>
+                <h3>From:</h3>
+                <p>Your Business Details</p>
+              </div>
+              <div>
+                <h3>To:</h3>
+                <p>Client Details</p>
+              </div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Discount</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td>${item.description || 'Item'}</td>
+                  <td>${item.qty}</td>
+                  <td>$${item.rate.toFixed(2)}</td>
+                  <td>${item.discount}%</td>
+                  <td>$${item.amount.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="total-line">Subtotal: $${subtotal.toFixed(2)}</div>
+            <div class="total-line">Discount: -$${discountAmount.toFixed(2)}</div>
+            <div class="total-line">Tax: $${taxAmount.toFixed(2)}</div>
+            <div class="total-line">Shipping: $${shipping.toFixed(2)}</div>
+            <div class="total-line final-total">Total: $${total.toFixed(2)}</div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Create and download the invoice
+    const blob = new Blob([invoiceContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoice-${Date.now()}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Card>
@@ -303,6 +387,16 @@ const InvoiceForm = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4 mt-8">
+            <Button variant="outline" className="px-8">
+              Cancel
+            </Button>
+            <Button onClick={generateAndDownloadInvoice} className="px-8">
+              Create Invoice
+            </Button>
           </div>
         </CardContent>
       </Card>
