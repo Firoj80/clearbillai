@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import LogoUpload from "./LogoUpload";
 import SignSealUpload from "./SignSealUpload";
 
@@ -19,12 +21,91 @@ interface InvoiceItem {
 }
 
 const InvoiceForm = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: "1", description: "", qty: 1, rate: 0, discount: 0, amount: 0 }
   ]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [shipping, setShipping] = useState(0);
+  const [clients, setClients] = useState<any[]>([]);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [businessFrom, setBusinessFrom] = useState("");
+  const [billTo, setBillTo] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+      fetchClients();
+    }
+  }, [user]);
+
+  const fetchUserData = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch user profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData) {
+        setUserProfile(profileData);
+        // Auto-populate business details
+        const businessDetails = [
+          profileData.business_name,
+          profileData.name,
+          [profileData.building_no, profileData.street_name].filter(Boolean).join(' '),
+          profileData.locality,
+          profileData.city,
+          profileData.state,
+          profileData.zip_code,
+          profileData.country,
+          profileData.phone
+        ].filter(Boolean).join('\n');
+        setBusinessFrom(businessDetails);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const fetchClients = async () => {
+    if (!user) return;
+
+    try {
+      const { data: clientsData } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (clientsData) {
+        setClients(clientsData);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setSelectedClient(client);
+      // Auto-populate client details
+      const clientDetails = [
+        client.client_name,
+        client.business_name,
+        client.address,
+        client.email,
+        client.phone
+      ].filter(Boolean).join('\n');
+      setBillTo(clientDetails);
+    }
+  };
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -224,14 +305,35 @@ const InvoiceForm = () => {
               <Textarea
                 placeholder="Business Name,&#10;Address,&#10;Phone,&#10;Email,&#10;TAX ID, etc."
                 className="min-h-[120px] resize-none"
+                value={businessFrom}
+                onChange={(e) => setBusinessFrom(e.target.value)}
               />
             </div>
             <div>
               <h3 className="text-lg font-medium mb-4">Bill To</h3>
-              <p className="text-sm text-muted-foreground mb-3">Client Details</p>
+              <p className="text-sm text-muted-foreground mb-3">Select Client or Enter Details</p>
+              {clients.length > 0 && (
+                <div className="mb-3">
+                  <Label>Select from existing clients</Label>
+                  <Select onValueChange={handleClientSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.client_name} {client.business_name && `(${client.business_name})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <Textarea
                 placeholder="Client/Business Name,&#10;Address,&#10;Phone,&#10;Email,&#10;TAX ID, etc."
                 className="min-h-[120px] resize-none"
+                value={billTo}
+                onChange={(e) => setBillTo(e.target.value)}
               />
             </div>
           </div>

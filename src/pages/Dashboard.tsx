@@ -1,180 +1,24 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+import { useNavigate, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Profile {
-  id: string;
-  name: string | null;
-  business_name: string | null;
-  phone: string | null;
-  building_no: string | null;
-  street_name: string | null;
-  locality: string | null;
-  city: string | null;
-  state: string | null;
-  zip_code: string | null;
-  country: string | null;
-  logo_url: string | null;
-  signature_url: string | null;
-}
-
-interface PaymentDetails {
-  profile_id: string;
-  cash_accepted: boolean | null;
-  paypal_email: string | null;
-  upi_id: string | null;
-  payment_link: string | null;
-  bank_name: string | null;
-  account_holder_name: string | null;
-  account_number: string | null;
-  account_type: string | null;
-  ifsc_swift_code: string | null;
-}
-
-interface Client {
-  id: string;
-  client_name: string;
-  business_name: string | null;
-  address: string | null;
-  email: string | null;
-  phone: string | null;
-  created_at: string | null;
-}
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import { ClientsPage } from "@/components/dashboard/ClientsPage";
+import { BusinessSettingsPage } from "@/components/dashboard/BusinessSettingsPage";
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    
-    fetchUserData();
   }, [user, navigate]);
 
-  const fetchUserData = async () => {
-    if (!user) return;
 
-    try {
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Fetch payment details
-      const { data: paymentData } = await supabase
-        .from('payment_details')
-        .select('*')
-        .eq('profile_id', user.id)
-        .single();
-
-      if (paymentData) {
-        setPaymentDetails(paymentData);
-      }
-
-      // Fetch clients
-      const { data: clientsData } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (clientsData) {
-        setClients(clientsData);
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !profile) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          ...profile
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating profile",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePaymentUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !paymentDetails) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('payment_details')
-        .upsert({
-          profile_id: user.id,
-          ...paymentDetails
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Payment details updated",
-        description: "Your payment details have been successfully updated.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating payment details",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   if (!user) {
     return null;
